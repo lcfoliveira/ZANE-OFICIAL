@@ -14,7 +14,11 @@ import {
   Volume2, 
   RefreshCw,
   Plus,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  Lock
 } from 'lucide-react';
 import { Agendamento, Medico, Paciente } from '../types';
 import { getHojeIso, getHoraAtual } from '../services/storage';
@@ -47,6 +51,8 @@ export const CheckinTotem: React.FC<CheckinTotemProps> = ({
   const [posterQrUrl, setPosterQrUrl] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [manualCodeInput, setManualCodeInput] = useState('');
+  // Por privacidade e solicitação do usuário, sessões previstas ficam ocultas por padrão no totem
+  const [mostrarSessoesPrevistas, setMostrarSessoesPrevistas] = useState(false);
 
   // Expresso / Encaixe Form
   const [expressPacienteId, setExpressPacienteId] = useState('');
@@ -271,7 +277,7 @@ export const CheckinTotem: React.FC<CheckinTotemProps> = ({
               Bem-vindo ao ZANE Pilates Studio!
             </h1>
             <p className="text-xs sm:text-sm text-[#879C7B]">
-              Localize sua sessão abaixo ou digite seu <strong>Nome</strong>, <strong>CPF</strong> ou <strong>Código (ex: ZNE-1092)</strong> para confirmar sua presença instantaneamente.
+              Digite seu <strong>Nome</strong>, <strong>CPF</strong> ou <strong>Código Localizador (ex: ZNE-1092)</strong> no campo de busca ou aproxime seu QR Code para confirmar presença instantaneamente.
             </p>
           </div>
 
@@ -358,60 +364,194 @@ export const CheckinTotem: React.FC<CheckinTotemProps> = ({
             )}
           </div>
 
-          {/* Lista de Consultas Aguardando Check-in Hoje */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs font-bold text-[#879C7B] tracking-wider uppercase border-b border-slate-100 pb-2">
-              <span>Sessões Previstas para Hoje ({agendamentosPendentes.length})</span>
-              <span>Toque no seu nome para confirmar presença</span>
-            </div>
+          {/* Sessões no Totem: Ocultas por padrão para privacidade / LGPD */}
+          <div className="space-y-4">
+            {/* Se o usuário realizou uma busca ativa */}
+            {searchQuery.trim() ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs font-bold text-[#879C7B] tracking-wider uppercase border-b border-slate-100 pb-2">
+                  <span>Resultado da Busca ({agendamentosPendentes.length})</span>
+                  <span>Toque para confirmar seu check-in</span>
+                </div>
 
-            {agendamentosPendentes.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {agendamentosPendentes.map((agd) => (
-                  <div
-                    key={agd.id}
-                    onClick={() => handleCheckinClick(agd)}
-                    className="p-4 rounded-2xl border-2 border-slate-200 hover:border-[#16362C] bg-[#FAF8F5]/60 hover:bg-white cursor-pointer transition-all flex items-center justify-between group shadow-2xs hover:shadow-md"
-                  >
-                    <div className="space-y-1 min-w-0 pr-3">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm sm:text-base text-[#16362C] group-hover:text-[#B89A57] truncate">
-                          {agd.pacienteNome}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-mono text-[10px] font-bold">
-                          {agd.codigo}
-                        </span>
-                      </div>
-                      <div className="text-xs text-[#879C7B] flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-[#CCB373]" />
-                        <span>{agd.hora} hrs</span>
-                        <span>•</span>
-                        <span className="truncate">{agd.medicoNome}</span>
-                      </div>
-                      <div className="text-[11px] text-slate-400">
-                        {agd.sala}
-                      </div>
-                    </div>
+                {agendamentosPendentes.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {agendamentosPendentes.map((agd) => (
+                      <div
+                        key={agd.id}
+                        onClick={() => handleCheckinClick(agd)}
+                        className="p-4 rounded-2xl border-2 border-emerald-300 hover:border-[#16362C] bg-white cursor-pointer transition-all flex items-center justify-between group shadow-sm hover:shadow-md animate-fade-in"
+                      >
+                        <div className="space-y-1 min-w-0 pr-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm sm:text-base text-[#16362C] group-hover:text-[#B89A57] truncate">
+                              {agd.pacienteNome}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-mono text-[10px] font-bold">
+                              {agd.codigo}
+                            </span>
+                          </div>
+                          <div className="text-xs text-[#879C7B] flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 text-[#CCB373]" />
+                            <span>{agd.hora} hrs</span>
+                            <span>•</span>
+                            <span className="truncate">{agd.medicoNome}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            {agd.sala}
+                          </div>
+                        </div>
 
-                    <button
-                      type="button"
-                      className="px-4 py-2 rounded-xl bg-[#16362C] text-[#FAF8F5] group-hover:bg-[#0D221C] text-xs font-bold tracking-wide uppercase shrink-0 transition-colors shadow-2xs cursor-pointer"
-                    >
-                      ✓ Check-in
-                    </button>
+                        <button
+                          type="button"
+                          className="px-4 py-2 rounded-xl bg-[#16362C] text-[#FAF8F5] group-hover:bg-[#0D221C] text-xs font-bold tracking-wide uppercase shrink-0 transition-colors shadow-2xs cursor-pointer"
+                        >
+                          ✓ Confirmar
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="p-8 text-center bg-[#FAF8F5] rounded-2xl border border-dashed border-[#E5E0D5] text-[#879C7B] space-y-2 animate-fade-in">
+                    <p className="text-sm font-semibold text-[#16362C]">
+                      Nenhuma sessão pendente encontrada para "{searchQuery}".
+                    </p>
+                    <p className="text-xs text-[#879C7B]">
+                      Verifique se digitou o CPF ou Código corretamente, ou procure a recepção para auxílio.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : mostrarSessoesPrevistas ? (
+              /* Caso o administrador/recepcionista tenha ativado para exibir sessões previstas */
+              <div className="space-y-3 animate-fade-in">
+                <div className="flex items-center justify-between text-xs font-bold text-[#879C7B] tracking-wider uppercase border-b border-slate-100 pb-2">
+                  <span>Sessões Previstas para Hoje ({agendamentosPendentes.length})</span>
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSessoesPrevistas(false)}
+                    className="inline-flex items-center gap-1.5 text-xs text-[#879C7B] hover:text-[#16362C] font-semibold py-1 px-2.5 rounded-lg border border-[#E5E0D5] hover:bg-slate-50 transition-all cursor-pointer"
+                    title="Ocultar lista de sessões do totem"
+                  >
+                    <EyeOff className="w-3.5 h-3.5 text-[#CCB373]" />
+                    <span>Ocultar sessões previstas</span>
+                  </button>
+                </div>
+
+                {agendamentosPendentes.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {agendamentosPendentes.map((agd) => (
+                      <div
+                        key={agd.id}
+                        onClick={() => handleCheckinClick(agd)}
+                        className="p-4 rounded-2xl border-2 border-slate-200 hover:border-[#16362C] bg-[#FAF8F5]/60 hover:bg-white cursor-pointer transition-all flex items-center justify-between group shadow-2xs hover:shadow-md"
+                      >
+                        <div className="space-y-1 min-w-0 pr-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm sm:text-base text-[#16362C] group-hover:text-[#B89A57] truncate">
+                              {agd.pacienteNome}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-mono text-[10px] font-bold">
+                              {agd.codigo}
+                            </span>
+                          </div>
+                          <div className="text-xs text-[#879C7B] flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 text-[#CCB373]" />
+                            <span>{agd.hora} hrs</span>
+                            <span>•</span>
+                            <span className="truncate">{agd.medicoNome}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            {agd.sala}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="px-4 py-2 rounded-xl bg-[#16362C] text-[#FAF8F5] group-hover:bg-[#0D221C] text-xs font-bold tracking-wide uppercase shrink-0 transition-colors shadow-2xs cursor-pointer"
+                        >
+                          ✓ Check-in
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center bg-[#FAF8F5] rounded-2xl border border-dashed border-[#E5E0D5] text-[#879C7B] space-y-2">
+                    <p className="text-sm font-semibold text-[#16362C]">
+                      Não há sessões pendentes de check-in para hoje no momento.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="p-8 text-center bg-[#FAF8F5] rounded-2xl border border-dashed border-[#E5E0D5] text-[#879C7B] space-y-2">
-                <p className="text-sm font-semibold text-[#16362C]">
-                  {searchQuery
-                    ? `Nenhuma consulta pendente encontrada para "${searchQuery}".`
-                    : 'Não há sessões pendentes de check-in para hoje no momento.'}
-                </p>
-                <p className="text-xs text-[#879C7B]">
-                  Caso seja um encaixe de última hora, solicite a inclusão na recepção.
-                </p>
+              /* ESTADO PADRÃO: Sessões previstas ocultas do totem interativo */
+              <div className="bg-[#FAF8F5] rounded-2xl border border-[#E5E0D5] p-6 sm:p-8 text-center space-y-6">
+                <div className="flex flex-col items-center justify-center space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-white border border-[#E5E0D5] flex items-center justify-center text-[#16362C] shadow-2xs">
+                    <ShieldCheck className="w-6 h-6 text-[#16362C]" />
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#16362C]">
+                    <Lock className="w-3.5 h-3.5 text-[#CCB373]" />
+                    <span>Sessões Previstas Ocultas • Privacidade e LGPD</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-[#879C7B] max-w-md">
+                    Para garantir o sigilo dos seus dados, a lista pública de alunos e horários não é exibida na tela do totem.
+                  </p>
+                </div>
+
+                {/* 3 Passos Guiados */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+                  <div className="p-3.5 bg-white rounded-xl border border-[#E5E0D5] space-y-1">
+                    <div className="w-6 h-6 rounded-lg bg-[#16362C]/10 text-[#16362C] text-xs font-bold flex items-center justify-center">
+                      1
+                    </div>
+                    <div className="text-xs font-bold text-[#16362C]">Busca no Totem</div>
+                    <p className="text-[11px] text-[#879C7B] leading-relaxed">
+                      Digite seu Nome, CPF ou Código do voucher no campo de busca acima.
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 bg-white rounded-xl border border-[#E5E0D5] space-y-1">
+                    <div className="w-6 h-6 rounded-lg bg-[#CCB373]/20 text-[#16362C] text-xs font-bold flex items-center justify-center">
+                      2
+                    </div>
+                    <div className="text-xs font-bold text-[#16362C]">Ou Escaneie o QR Code</div>
+                    <p className="text-[11px] text-[#879C7B] leading-relaxed">
+                      Use a câmera do totem ou o leitor de código de barras do seu celular.
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 bg-white rounded-xl border border-[#E5E0D5] space-y-1">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">
+                      3
+                    </div>
+                    <div className="text-xs font-bold text-[#16362C]">Confirmação Direta</div>
+                    <p className="text-[11px] text-[#879C7B] leading-relaxed">
+                      Sua presença é confirmada e sua sala informada na tela com recibo.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setScannerOpen(true)}
+                    className="px-5 py-2.5 rounded-xl bg-[#16362C] hover:bg-[#0D221C] text-[#FAF8F5] text-xs font-bold tracking-wide transition-all flex items-center gap-2 shadow-2xs cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4 text-[#CCB373]" />
+                    <span>Abrir Leitor de QR Code / Voucher</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSessoesPrevistas(true)}
+                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E5E0D5] text-[#879C7B] hover:text-[#16362C] text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                    title="Exibir sessões para auxílio da equipe"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-[#CCB373]" />
+                    <span>Visualizar sessões previstas</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
