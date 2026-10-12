@@ -1,0 +1,8 @@
+{
+  "name": "ZANE - Agendamento, Check-in QR & Prontuário",
+  "description": "Sistema completo de agendamento de consultas médicas com check-in por QR Code, prontuário eletrônico do paciente (PEP) e sincronização automática com Google Sheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
